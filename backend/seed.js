@@ -23,9 +23,9 @@ const seedUsers = async () => {
 
         // Create owner account
         const owner = await User.create({
-            username: 'owner',
-            email: 'owner@computershop.com',
-            password: 'password',
+            username: 'admin1',
+            email: 'admin@uniquebrothers.com',
+            password: 'unique123',
             role: 'owner',
             contactNumber: '1234567890'
         });
@@ -33,17 +33,17 @@ const seedUsers = async () => {
 
         // Create employee account
         const employee = await User.create({
-            username: 'employee',
-            email: 'employee@computershop.com',
-            password: 'password',
+            username: 'staff1',
+            email: 'staff@uniquebrothers.com',
+            password: 'unique123',
             role: 'employee',
             contactNumber: '0987654321'
         });
         console.log('✅ Created employee account');
 
-        console.log('\n📋 Demo Credentials:');
-        console.log('Owner - Username: owner, Password: password');
-        console.log('Employee - Username: employee, Password: password');
+        console.log('\n📋 New Credentials:');
+        console.log('Owner    - Username: admin1,   Password: unique123');
+        console.log('Employee - Username: staff1,   Password: unique123');
 
         process.exit(0);
     } catch (error) {
