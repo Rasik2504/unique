@@ -58,7 +58,8 @@ export const fieldsAPI = {
     getAll: () => api.get('/fields'),
     create: (field) => api.post('/fields', field),
     update: (id, field) => api.put(`/fields/${id}`, field),
-    delete: (id) => api.delete(`/fields/${id}`)
+    delete: (id) => api.delete(`/fields/${id}`),
+    reseed: () => api.post('/fields/reseed')
 };
 
 export default api;

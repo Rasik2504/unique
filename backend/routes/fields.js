@@ -123,4 +123,66 @@ router.delete('/:id', protect, authorize('owner'), async (req, res) => {
     }
 });
 
+// @route   POST /api/fields/reseed
+// @desc    Restore default field configurations
+// @access  Private/Owner
+router.post('/reseed', protect, authorize('owner'), async (req, res) => {
+    try {
+        // Clear existing fields
+        await FieldConfig.deleteMany({});
+
+        // Create default fields
+        const defaultFields = [
+            {
+                fieldName: 'Product Name',
+                fieldType: 'text',
+                required: true,
+                order: 1,
+                isDefault: true
+            },
+            {
+                fieldName: 'Quantity',
+                fieldType: 'number',
+                required: true,
+                order: 2,
+                isDefault: true
+            },
+            {
+                fieldName: 'Price',
+                fieldType: 'number',
+                required: true,
+                order: 3,
+                isDefault: true
+            },
+            {
+                fieldName: 'Customer Name',
+                fieldType: 'text',
+                required: true,
+                order: 4,
+                isDefault: true
+            },
+            {
+                fieldName: 'Payment Method',
+                fieldType: 'select',
+                options: ['Cash', 'Card', 'UPI', 'Net Banking', 'Other'],
+                required: true,
+                order: 5,
+                isDefault: true
+            }
+        ];
+
+        await FieldConfig.insertMany(defaultFields);
+
+        res.status(200).json({
+            success: true,
+            message: 'Default fields restored successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

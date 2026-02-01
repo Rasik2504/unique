@@ -73,6 +73,18 @@ const FieldManager = ({ fields, onRefresh }) => {
         }
     };
 
+    const handleReseed = async () => {
+        if (!window.confirm('This will delete all current fields and restore the standard ones (Product Name, Price, etc.). Continue?')) return;
+
+        try {
+            await fieldsAPI.reseed();
+            setMessage({ type: 'success', text: '✅ Default fields restored successfully!' });
+            onRefresh();
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Failed to restore defaults' });
+        }
+    };
+
     const moveField = async (index, direction) => {
         const newFields = [...fields];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -179,166 +191,215 @@ const FieldManager = ({ fields, onRefresh }) => {
                 </div>
             )}
 
-            <div style={{ overflowX: 'auto' }}>
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th style={{ width: '80px' }}>Order</th>
-                            <th>Field Name</th>
-                            <th>Type</th>
-                            <th>Required</th>
-                            <th>Options</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {fields.map((field, index) => (
-                            <tr key={field._id}>
-                                <td>
-                                    <div className="flex gap-1">
-                                        <button
-                                            onClick={() => moveField(index, 'up')}
-                                            disabled={index === 0}
-                                            className="btn btn-secondary"
-                                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                            title="Move up"
-                                        >
-                                            ▲
-                                        </button>
-                                        <button
-                                            onClick={() => moveField(index, 'down')}
-                                            disabled={index === fields.length - 1}
-                                            className="btn btn-secondary"
-                                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                            title="Move down"
-                                        >
-                                            ▼
-                                        </button>
-                                    </div>
-                                </td>
-                                <td>
-                                    {editingId === field._id ? (
-                                        <input
-                                            type="text"
-                                            className="form-input"
-                                            value={editForm.fieldName}
-                                            onChange={(e) => setEditForm({ ...editForm, fieldName: e.target.value })}
-                                            style={{ minWidth: '150px' }}
-                                        />
-                                    ) : (
-                                        <span style={{ fontWeight: '600' }}>{field.fieldName}</span>
-                                    )}
-                                </td>
-                                <td>
-                                    {editingId === field._id ? (
-                                        <select
-                                            className="form-select"
-                                            value={editForm.fieldType}
-                                            onChange={(e) => setEditForm({ ...editForm, fieldType: e.target.value })}
-                                        >
-                                            <option value="text">Text</option>
-                                            <option value="number">Number</option>
-                                            <option value="select">Dropdown</option>
-                                            <option value="date">Date</option>
-                                        </select>
-                                    ) : (
-                                        <span style={{
-                                            padding: '0.25rem 0.5rem',
-                                            borderRadius: 'var(--radius-sm)',
-                                            background: 'var(--bg-tertiary)',
-                                            fontSize: '0.875rem'
-                                        }}>
-                                            {field.fieldType}
-                                        </span>
-                                    )}
-                                </td>
-                                <td>
-                                    {editingId === field._id ? (
-                                        <input
-                                            type="checkbox"
-                                            checked={editForm.required}
-                                            onChange={(e) => setEditForm({ ...editForm, required: e.target.checked })}
-                                        />
-                                    ) : (
-                                        field.required ? '✅ Yes' : '❌ No'
-                                    )}
-                                </td>
-                                <td>
-                                    {editingId === field._id && editForm.fieldType === 'select' ? (
-                                        <input
-                                            type="text"
-                                            className="form-input"
-                                            value={editForm.options}
-                                            onChange={(e) => setEditForm({ ...editForm, options: e.target.value })}
-                                            placeholder="Comma-separated"
-                                            style={{ minWidth: '200px' }}
-                                        />
-                                    ) : (
-                                        <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                                            {field.options?.length > 0 ? field.options.join(', ') : '-'}
-                                        </span>
-                                    )}
-                                </td>
-                                <td>
-                                    <div className="flex gap-1">
-                                        {editingId === field._id ? (
-                                            <>
-                                                <button
-                                                    onClick={() => handleUpdate(field._id)}
-                                                    className="btn btn-success"
-                                                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                                                >
-                                                    Save
-                                                </button>
-                                                <button
-                                                    onClick={() => setEditingId(null)}
-                                                    className="btn btn-secondary"
-                                                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button
-                                                    onClick={() => handleEdit(field)}
-                                                    className="btn btn-primary"
-                                                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteField(field._id, field.fieldName)}
-                                                    className="btn btn-danger"
-                                                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </td>
+            {fields.length === 0 && !showAddForm ? (
+                <div style={{
+                    padding: '3rem',
+                    textAlign: 'center',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '2px dashed var(--border)',
+                    marginBottom: '1.5rem'
+                }}>
+                    <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                        No fields configured yet.
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                        <button onClick={() => setShowAddForm(true)} className="btn btn-primary">
+                            ➕ Add Your First Field
+                        </button>
+                        <button onClick={handleReseed} className="btn btn-secondary">
+                            🔄 Restore Default Fields
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div style={{ overflowX: 'auto' }}>
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th style={{ width: '80px' }}>Order</th>
+                                <th>Field Name</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Options</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {fields.map((field, index) => (
+                                <tr key={field._id}>
+                                    <td>
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={() => moveField(index, 'up')}
+                                                disabled={index === 0}
+                                                className="btn btn-secondary"
+                                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                                title="Move up"
+                                            >
+                                                ▲
+                                            </button>
+                                            <button
+                                                onClick={() => moveField(index, 'down')}
+                                                disabled={index === fields.length - 1}
+                                                className="btn btn-secondary"
+                                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                                title="Move down"
+                                            >
+                                                ▼
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {editingId === field._id ? (
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                value={editForm.fieldName}
+                                                onChange={(e) => setEditForm({ ...editForm, fieldName: e.target.value })}
+                                                style={{ minWidth: '150px' }}
+                                            />
+                                        ) : (
+                                            <span style={{ fontWeight: '600' }}>{field.fieldName}</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {editingId === field._id ? (
+                                            <select
+                                                className="form-select"
+                                                value={editForm.fieldType}
+                                                onChange={(e) => setEditForm({ ...editForm, fieldType: e.target.value })}
+                                            >
+                                                <option value="text">Text</option>
+                                                <option value="number">Number</option>
+                                                <option value="select">Dropdown</option>
+                                                <option value="date">Date</option>
+                                            </select>
+                                        ) : (
+                                            <span style={{
+                                                padding: '0.25rem 0.5rem',
+                                                borderRadius: 'var(--radius-sm)',
+                                                background: 'var(--bg-tertiary)',
+                                                fontSize: '0.875rem'
+                                            }}>
+                                                {field.fieldType}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {editingId === field._id ? (
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.required}
+                                                onChange={(e) => setEditForm({ ...editForm, required: e.target.checked })}
+                                            />
+                                        ) : (
+                                            field.required ? '✅ Yes' : '❌ No'
+                                        )}
+                                    </td>
+                                    <td>
+                                        {editingId === field._id && editForm.fieldType === 'select' ? (
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                value={editForm.options}
+                                                onChange={(e) => setEditForm({ ...editForm, options: e.target.value })}
+                                                placeholder="Comma-separated"
+                                                style={{ minWidth: '200px' }}
+                                            />
+                                        ) : (
+                                            <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                                                {field.options?.length > 0 ? field.options.join(', ') : '-'}
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <div className="flex gap-1">
+                                            {editingId === field._id ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleUpdate(field._id)}
+                                                        className="btn btn-success"
+                                                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                                                    >
+                                                        Save
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditingId(null)}
+                                                        className="btn btn-secondary"
+                                                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleEdit(field)}
+                                                        className="btn btn-primary"
+                                                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteField(field._id, field.fieldName)}
+                                                        className="btn btn-danger"
+                                                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
-            <div className="mt-3" style={{
-                padding: '1rem',
-                background: 'var(--bg-tertiary)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem',
-                color: 'var(--text-secondary)'
-            }}>
-                <p>ℹ️ <strong>Field Management:</strong></p>
-                <ul style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
-                    <li>✏️ <strong>Edit</strong> any field - click Edit, make changes, then click <strong>Save</strong></li>
-                    <li>🗑️ <strong>Delete</strong> any field you don't need</li>
-                    <li>⬆️⬇️ <strong>Reorder</strong> fields using up/down arrows (saves automatically)</li>
-                    <li>➕ <strong>Add</strong> custom fields for your specific needs</li>
-                    <li>Changes apply to all new data entries immediately</li>
-                </ul>
+            <div className="flex gap-2 mt-3" style={{ flexWrap: 'wrap' }}>
+                <div style={{
+                    flex: '1',
+                    padding: '1rem',
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '0.875rem',
+                    color: 'var(--text-secondary)'
+                }}>
+                    <p>ℹ️ <strong>Field Management:</strong></p>
+                    <ul style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
+                        <li>✏️ <strong>Edit</strong> any field - click Edit, make changes, then click <strong>Save</strong></li>
+                        <li>🗑️ <strong>Delete</strong> any field you don't need</li>
+                        <li>⬆️⬇️ <strong>Reorder</strong> fields using up/down arrows (saves automatically)</li>
+                        <li>➕ <strong>Add</strong> custom fields for your specific needs</li>
+                    </ul>
+                </div>
+
+                <div style={{
+                    flex: '0.4',
+                    padding: '1rem',
+                    background: 'rgba(52, 211, 153, 0.1)',
+                    border: '1px border var(--success)',
+                    borderRadius: 'var(--radius-md)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '0.75rem'
+                }}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--success)', textAlign: 'center' }}>
+                        Need standard fields back?
+                    </p>
+                    <button
+                        onClick={handleReseed}
+                        className="btn btn-secondary w-full"
+                        style={{ border: '1px solid var(--success)', color: 'var(--success)' }}
+                    >
+                        🔄 Restore Defaults
+                    </button>
+                </div>
             </div>
         </div>
     );
