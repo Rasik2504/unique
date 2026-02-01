@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (credentials) => {
         try {
             const response = await authAPI.login(credentials);
-            const { token, user: userData } = response.data.data;
+            const { token, data: userData } = response.data;
 
             await AsyncStorage.setItem('token', token);
             setUser(userData);
