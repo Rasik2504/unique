@@ -11,32 +11,6 @@ const DailyDataSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
         index: true
-    },
-    productName: {
-        type: String,
-        required: [true, 'Please provide a product name'],
-        trim: true
-    },
-    quantity: {
-        type: Number,
-        required: [true, 'Please provide quantity'],
-        min: [1, 'Quantity must be at least 1']
-    },
-    price: {
-        type: Number,
-        required: [true, 'Please provide price'],
-        min: [0, 'Price cannot be negative']
-    },
-    customerName: {
-        type: String,
-        required: [true, 'Please provide customer name'],
-        trim: true
-    },
-    paymentMethod: {
-        type: String,
-        required: [true, 'Please provide payment method'],
-        enum: ['Cash', 'Card', 'UPI', 'Net Banking', 'Other'],
-        default: 'Cash'
     }
 }, {
     timestamps: true,

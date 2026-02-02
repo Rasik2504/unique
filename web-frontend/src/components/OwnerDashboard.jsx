@@ -15,6 +15,7 @@ const OwnerDashboard = () => {
     const [editingId, setEditingId] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [submissionLoading, setSubmissionLoading] = useState(false);
 
     useEffect(() => {
         fetchInitialData();
@@ -65,12 +66,15 @@ const OwnerDashboard = () => {
     const handleUpdate = async (id) => {
         try {
             await dataAPI.update(id, editForm);
-            setMessage({ type: 'success', text: 'Entry updated successfully!' });
+            setMessage({ type: 'success', text: '✅ Entry updated successfully!' });
             setEditingId(null);
             fetchData();
             fetchStats();
         } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to update entry' });
+            setMessage({
+                type: 'error',
+                text: error.response?.data?.message || 'Failed to update entry'
+            });
         }
     };
 
@@ -79,11 +83,14 @@ const OwnerDashboard = () => {
 
         try {
             await dataAPI.delete(id);
-            setMessage({ type: 'success', text: 'Entry deleted successfully!' });
+            setMessage({ type: 'success', text: '✅ Entry deleted successfully!' });
             fetchData();
             fetchStats();
         } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to delete entry' });
+            setMessage({
+                type: 'error',
+                text: error.response?.data?.message || 'Failed to delete entry'
+            });
         }
     };
 
@@ -226,6 +233,7 @@ const OwnerDashboard = () => {
 
                 <form onSubmit={async (e) => {
                     e.preventDefault();
+                    setSubmissionLoading(true);
                     const formData = new FormData(e.target);
                     const payload = {
                         date: new Date()
@@ -239,12 +247,17 @@ const OwnerDashboard = () => {
 
                     try {
                         await dataAPI.create(payload);
-                        setMessage({ type: 'success', text: 'Entry added successfully!' });
+                        setMessage({ type: 'success', text: '✅ Entry added successfully!' });
                         e.target.reset();
                         fetchData();
                         fetchStats();
                     } catch (error) {
-                        setMessage({ type: 'error', text: 'Failed to add entry' });
+                        setMessage({
+                            type: 'error',
+                            text: error.response?.data?.message || 'Failed to add entry'
+                        });
+                    } finally {
+                        setSubmissionLoading(false);
                     }
                 }}>
                     <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
@@ -272,8 +285,15 @@ const OwnerDashboard = () => {
                         ))}
                     </div>
 
-                    <button type="submit" className="btn btn-success" style={{ marginTop: '1rem' }}>
-                        💾 Save Entry
+                    <button type="submit" className="btn btn-success" disabled={submissionLoading} style={{ marginTop: '1rem' }}>
+                        {submissionLoading ? (
+                            <span className="flex items-center gap-2">
+                                <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                                Saving...
+                            </span>
+                        ) : (
+                            '💾 Save Entry'
+                        )}
                     </button>
                 </form>
             </div>
